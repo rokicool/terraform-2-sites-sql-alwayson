@@ -12,15 +12,6 @@ variable "project_id" {
   description = "Just a substring to add to created objects to make them uniquie"
 }
 
-variable "shared_key_to_onprem" {
-  type = string
-  description = "Pre shared key with on premises VPN device"
-}
-
-variable "gateway_address_onprem" {
-  type = string
-  description = "IP address of the on premises VPN device"
-}
 
 # Configure the Azure Provider
 provider "azurerm" {
@@ -37,7 +28,7 @@ resource "azurerm_resource_group" "resource-group-one" {
 }
 
 # Create a virtual network within the resource group
-resource "azurerm_virtual_network" "vnet_main_${var.environment}" {
+resource "azurerm_virtual_network" "vnet_test" {
   name                = "vnet-${var.project_id}-${var.environment}"
   resource_group_name = azurerm_resource_group.resource-group-one.name
   location            = azurerm_resource_group.resource-group-one.location
@@ -51,12 +42,9 @@ resource "azurerm_virtual_network" "vnet_main_${var.environment}" {
 resource "azurerm_subnet" "sql-subnet" {
   name                 = "SqlSubnet"
   resource_group_name  = azurerm_resource_group.resource-group-one.name
-  virtual_network_name = azurerm_virtual_network.vnet_main_${var.environment}.name
+  virtual_network_name = azurerm_virtual_network.vnet_test.name
   address_prefixes     = ["10.50.2.0/24"]
-
-  tags = {
-    environment = "${var.environment}"
-  }
+  
 }
 
 
