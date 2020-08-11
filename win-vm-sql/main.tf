@@ -85,5 +85,18 @@ resource "azurerm_virtual_machine" "win-vm-sql" {
 
 resource "azurerm_mssql_virtual_machine" "win-vm-sql" {
   virtual_machine_id = azurerm_virtual_machine.win-vm-sql.id
-  sql_license_type   = "PAYG" #??
+  
+  sql_license_type                 = "PAYG"
+  r_services_enabled               = true
+  sql_connectivity_port            = 1433
+  sql_connectivity_type            = "PRIVATE"
+  sql_connectivity_update_password = var.sql_password
+  sql_connectivity_update_username = var.sql_username
+
+  auto_patching {
+    day_of_week                            = "Sunday"
+    maintenance_window_duration_in_minutes = 60
+    maintenance_window_starting_hour       = 2
+  }
+
 }

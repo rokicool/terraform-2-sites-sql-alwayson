@@ -16,14 +16,23 @@ variable "project_id" {
 variable "admin_username" {
   type        = string
   description = "Windows VM Admin User"
- 
 }
 
 # Windows VM Admin Password
 variable "admin_password" {
   type        = string
   description = "Windows VM Admin Password"
+}
 
+
+variable "sql_username" {
+  type = string
+  description = "The username of SQL admin user"
+}
+
+variable "sql_password" {
+  type = string
+  description = "The password of SQL admin user"
 }
 
 
@@ -61,7 +70,7 @@ resource "azurerm_subnet" "sql-subnet" {
   
 }
 
-
+/*
 # Create Network Security Group to Access web VM from Internet
 resource "azurerm_network_security_group" "web-windows-vm-nsg" {
   name                = "nsg-web-windows-vm-${var.project_id}-${var.environment}"
@@ -118,6 +127,7 @@ module "win-vm" {
   network_security_group_id = azurerm_network_security_group.web-windows-vm-nsg.id
 
 }
+*/
 
 # Create Network Security Group to Access web VM from Internet
 resource "azurerm_network_security_group" "sql-windows-vm-nsg" {
@@ -173,6 +183,9 @@ module "win-vm-sql" {
   os_image_offer   = "SQL2017-WS2016"
   os_image_sku     = "SQLDEV"
   os_image_version = "latest"
+
+  sql_username = var.sql_username
+  sql_password = var.sql_password
 
   os_profile_windows_timezone = "Pacific Standard Time"
 

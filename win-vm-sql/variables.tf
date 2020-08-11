@@ -1,5 +1,5 @@
 #######################################
-## Windows VM          Server - Main ##
+## Windows VM   SQL    Server - Main ##
 #######################################
 
 
@@ -75,6 +75,16 @@ variable "admin_username" {
 variable "admin_password" {
   type = string
   description = "The password of the admin user"
+}
+
+variable "sql_username" {
+  type = string
+  description = "The username of SQL admin user"
+}
+
+variable "sql_password" {
+  type = string
+  description = "The password of SQL admin user"
 }
 
 variable "project_id" {
