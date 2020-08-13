@@ -162,6 +162,19 @@ security_rule {
   }
 
 
+security_rule {
+    name                       = "allow-sql-chicago-roki"
+    description                = "allow-sql-chicago-roki"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1433"
+    source_address_prefix      = "76.229.200.36/32"
+    destination_address_prefix = "*" 
+  }
+
   tags = {
    # application = var.app_name
     environment = var.environment 
@@ -189,7 +202,7 @@ module "win-vm-sql" {
 
   os_profile_windows_timezone = "Pacific Standard Time"
 
-  vm_size     = "Standard_B1ms"
+  vm_size     = "Standard_B2ms"
   project_id  = var.project_id
 
   admin_username = var.admin_username

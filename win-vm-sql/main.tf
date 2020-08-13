@@ -87,7 +87,7 @@ resource "azurerm_mssql_virtual_machine" "win-vm-sql" {
   virtual_machine_id = azurerm_virtual_machine.win-vm-sql.id
   
   sql_license_type                 = "PAYG"
-  r_services_enabled               = true
+  r_services_enabled               = false
   sql_connectivity_port            = 1433
   sql_connectivity_type            = "PRIVATE"
   sql_connectivity_update_password = var.sql_password
