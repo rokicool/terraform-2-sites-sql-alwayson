@@ -129,6 +129,100 @@ module "win-vm" {
 }
 */
 
+
+resource "azurerm_app_service_plan" "app_service_plan" {
+  name                = "app_service_plan"
+  location            = azurerm_resource_group.resource-group-one.location
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+
+  sku {
+    tier = "Free"
+    size = "F1"
+  }
+}
+
+resource "azurerm_app_service" "app_service_one" {
+  name                = "app-service-one-rokicool-2020"
+  location            =  azurerm_resource_group.resource-group-one.location
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+  app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
+
+  
+
+  app_settings = {
+    "SOME_KEY" = "some-value"
+  }
+
+  connection_string {
+    name  = "Database"
+    type  = "SQLServer"
+        value = "Data Source=40.122.201.238;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
+  }
+}
+
+
+resource "azurerm_app_service" "app_service_two" {
+  name                = "app-service-two-rokicool-2020"
+  location            =  azurerm_resource_group.resource-group-one.location
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+  app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
+
+  
+
+  app_settings = {
+    "SOME_KEY" = "some-value"
+  }
+
+  connection_string {
+    name  = "Database"
+    type  = "SQLServer"
+    value = "Data Source=40.122.201.238;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
+  }
+}
+
+
+
+
+# Create Traffic Manager API Profile
+resource "azurerm_traffic_manager_profile" "traffic-manager" {
+  name                   = "tm-global-${var.project_id}-${var.environment}"
+  resource_group_name    = azurerm_resource_group.resource-group-one.name
+  traffic_routing_method = "Performance"
+
+  dns_config {
+    relative_name = "tm-global-${var.project_id}-${var.environment}"
+    ttl           = 100
+  }
+
+  monitor_config {
+    protocol = "http"
+    port     = 80
+    path     = "/"
+  }
+}
+
+# Create Traffic Manager - East End Point
+resource "azurerm_traffic_manager_endpoint" "tm-endpoint-one" {
+  name                = "Gateway One"
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+  profile_name        = azurerm_traffic_manager_profile.traffic-manager.name
+  type                = "externalEndpoints"
+  target              = "app-service-one-rokicool-2020.azurewebsites.net"
+  endpoint_location   = azurerm_resource_group.resource-group-one.location
+}
+
+# Create Traffic Manager - East End Point
+resource "azurerm_traffic_manager_endpoint" "tm-endpoint-two" {
+  name                = "Gateway two"
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+  profile_name        = azurerm_traffic_manager_profile.traffic-manager.name
+  type                = "externalEndpoints"
+  target              = "app-service-two-rokicool-2020.azurewebsites.net"
+  endpoint_location   = azurerm_resource_group.resource-group-one.location
+}
+
+
+
 # Create Network Security Group to Access web VM from Internet
 resource "azurerm_network_security_group" "sql-windows-vm-nsg" {
   name                = "nsg-sql-win-vm-${var.project_id}-${var.environment}"
@@ -175,6 +269,33 @@ security_rule {
     destination_address_prefix = "*" 
   }
 
+security_rule {
+    name                       = "allow-sql-web-one"
+    description                = "allow-sql-web-one"
+    priority                   = 115
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1433"
+    source_address_prefixes      = split(",", azurerm_app_service.app_service_one.outbound_ip_addresses)
+    destination_address_prefix = "*" 
+  }
+  
+
+security_rule {
+    name                       = "allow-sql-web-two"
+    description                = "allow-sql-web-two"
+    priority                   = 120
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1433"
+    source_address_prefixes      = split(",", azurerm_app_service.app_service_two.outbound_ip_addresses)
+    destination_address_prefix = "*" 
+  }
+
   tags = {
    # application = var.app_name
     environment = var.environment 
@@ -209,3 +330,42 @@ module "win-vm-sql" {
   admin_password = var.admin_password
   network_security_group_id = azurerm_network_security_group.sql-windows-vm-nsg.id
 }
+
+
+module "win-two-sql" {
+  source = "./win-vm-sql"
+
+  win_vm_sql_name  = "win-two-sql"
+  vm_rg_name       = azurerm_resource_group.resource-group-one.name 
+  vm_location      = azurerm_resource_group.resource-group-one.location
+  vm_subnet_id     = azurerm_subnet.sql-subnet.id
+  environment      = var.environment
+
+  vm_storage_type  = "StandardSSD_LRS"
+
+  os_image_publisher = "MicrosoftSQLServer"
+  os_image_offer   = "SQL2017-WS2016"
+  os_image_sku     = "SQLDEV"
+  os_image_version = "latest"
+
+  sql_username = var.sql_username
+  sql_password = var.sql_password
+
+  os_profile_windows_timezone = "Pacific Standard Time"
+
+  vm_size     = "Standard_B2ms"
+  project_id  = var.project_id
+
+  admin_username = var.admin_username
+  admin_password = var.admin_password
+  network_security_group_id = azurerm_network_security_group.sql-windows-vm-nsg.id
+}
+
+output "SQL-one-IP" {
+  value = module.win-vm-sql.win_vm_sql_public_ip
+}
+
+
+output "SQL-two-IP" {
+  value = module.win-two-sql.win_vm_sql_public_ip
+} 
