@@ -44,6 +44,12 @@ provider "azurerm" {
   features {}
 }
 
+/* -----------------------------------------------------------------------
+-
+Infrastructure in US Central
+-
+*/
+
 # Make RG in Central US
 resource "azurerm_resource_group" "resource-group-one" {
   name     = "rgp-central-${var.project_id}-${var.environment}"
@@ -51,29 +57,29 @@ resource "azurerm_resource_group" "resource-group-one" {
 }
 
 # Create a virtual network within the resource group
-resource "azurerm_virtual_network" "vnet_test" {
+resource "azurerm_virtual_network" "vnet_one" {
   name                = "vnet-${var.project_id}-${var.environment}"
   resource_group_name = azurerm_resource_group.resource-group-one.name
   location            = azurerm_resource_group.resource-group-one.location
   address_space       = ["10.50.0.0/16"]
 
   tags = {
-    environment = "${var.environment}"
+    environment = var.environment
   }
 }
 
-resource "azurerm_subnet" "sql-subnet" {
-  name                 = "SqlSubnet"
+resource "azurerm_subnet" "def-subnet-one" {
+  name                 = "def-subnet-one"
   resource_group_name  = azurerm_resource_group.resource-group-one.name
-  virtual_network_name = azurerm_virtual_network.vnet_test.name
+  virtual_network_name = azurerm_virtual_network.vnet_one.name
   address_prefixes     = ["10.50.2.0/24"]
   
 }
 
-/*
-# Create Network Security Group to Access web VM from Internet
-resource "azurerm_network_security_group" "web-windows-vm-nsg" {
-  name                = "nsg-web-windows-vm-${var.project_id}-${var.environment}"
+
+# Create Network Security Group to Access Win VM One from Internet
+resource "azurerm_network_security_group" "win-vm-nsg-one" {
+  name                = "win-vm-nsg-one-${var.project_id}-${var.environment}"
   location            = azurerm_resource_group.resource-group-one.location
   resource_group_name = azurerm_resource_group.resource-group-one.name
 
@@ -111,6 +117,117 @@ security_rule {
 }
 
 
+module "win-vm-addc-one" {
+  source = "./win-vm-addc"
+
+  vm_name     = "windows-one"
+  vm_rg_name  = azurerm_resource_group.resource-group-one.name 
+  vm_location = azurerm_resource_group.resource-group-one.location
+  vm_subnet_id= azurerm_subnet.def-subnet-one.id
+  vm_storage_type = "StandardSSD_LRS"
+  environment = var.environment
+  vm_size     = "Standard_B2s"
+  project_id  = var.project_id
+  admin_username = var.admin_username
+  admin_password = var.admin_password
+  network_security_group_id = azurerm_network_security_group.win-vm-nsg-one.id
+  
+  
+  active_directory_domain = "alwayson.azure"
+  active_directory_netbios_name = "alwayson"
+}
+
+/* -----------------------------------------------------------------------
+-
+Infrastructure in US East
+-
+*/
+
+
+# Make RG in East US
+resource "azurerm_resource_group" "resource-group-two" {
+  name     = "rgp-east-${var.project_id}-${var.environment}"
+  location = "Central US"
+}
+
+# Create a virtual network within the resource group
+resource "azurerm_virtual_network" "vnet_two" {
+  name                = "vnet-${var.project_id}-${var.environment}"
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+  location            = azurerm_resource_group.resource-group-two.location
+  address_space       = ["10.51.0.0/16"]
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+resource "azurerm_subnet" "def-subnet-two" {
+  name                 = "def-subnet-two"
+  resource_group_name  = azurerm_resource_group.resource-group-two.name
+  virtual_network_name = azurerm_virtual_network.vnet_two.name
+  address_prefixes     = ["10.51.2.0/24"]
+  
+}
+
+
+# Create Network Security Group to Access Win VM two from Internet
+resource "azurerm_network_security_group" "win-vm-nsg-two" {
+  name                = "win-vm-nsg-two-${var.project_id}-${var.environment}"
+  location            = azurerm_resource_group.resource-group-two.location
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+
+  security_rule {
+    name                       = "allow-rdp"
+    description                = "allow-rdp from any internal network"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "10.0.0.0/8"
+    destination_address_prefix = "*" 
+  }
+
+security_rule {
+    name                       = "allow-rdp-chicago-roki"
+    description                = "allow-rdp-chicago-roki"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "76.229.200.36/32"
+    destination_address_prefix = "*" 
+  }
+
+
+  tags = {
+   # application = var.app_name
+    environment = var.environment 
+  }
+}
+
+
+module "win-vm-addc-two" {
+  source = "./win-vm"
+
+  vm_name     = "windows-two"
+  vm_rg_name  = azurerm_resource_group.resource-group-two.name 
+  vm_location = azurerm_resource_group.resource-group-two.location
+  vm_subnet_id= azurerm_subnet.def-subnet-two.id
+  vm_storage_type = "StandardSSD_LRS"
+  environment = var.environment
+  vm_size     = "Standard_B2s"
+  project_id  = var.project_id
+  admin_username = var.admin_username
+  admin_password = var.admin_password
+  network_security_group_id = azurerm_network_security_group.win-vm-nsg-one.id
+  
+}
+/* 
 module "win-vm" {
   source = "./win-vm"
 
@@ -130,6 +247,7 @@ module "win-vm" {
 */
 
 
+/*
 resource "azurerm_app_service_plan" "app_service_plan" {
   name                = "app_service_plan"
   location            = azurerm_resource_group.resource-group-one.location
@@ -179,9 +297,9 @@ resource "azurerm_app_service" "app_service_two" {
     value = "Data Source=40.122.201.238;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
   }
 }
+*/
 
-
-
+/*
 
 # Create Traffic Manager API Profile
 resource "azurerm_traffic_manager_profile" "traffic-manager" {
@@ -220,8 +338,7 @@ resource "azurerm_traffic_manager_endpoint" "tm-endpoint-two" {
   target              = "app-service-two-rokicool-2020.azurewebsites.net"
   endpoint_location   = azurerm_resource_group.resource-group-one.location
 }
-
-
+*/
 
 # Create Network Security Group to Access web VM from Internet
 resource "azurerm_network_security_group" "sql-windows-vm-nsg" {
@@ -268,7 +385,7 @@ security_rule {
     source_address_prefix      = "76.229.200.36/32"
     destination_address_prefix = "*" 
   }
-
+/*
 security_rule {
     name                       = "allow-sql-web-one"
     description                = "allow-sql-web-one"
@@ -281,7 +398,7 @@ security_rule {
     source_address_prefixes      = split(",", azurerm_app_service.app_service_one.outbound_ip_addresses)
     destination_address_prefix = "*" 
   }
-  
+
 
 security_rule {
     name                       = "allow-sql-web-two"
@@ -295,13 +412,16 @@ security_rule {
     source_address_prefixes      = split(",", azurerm_app_service.app_service_two.outbound_ip_addresses)
     destination_address_prefix = "*" 
   }
-
+*/
   tags = {
    # application = var.app_name
     environment = var.environment 
   }
 }
 
+
+
+/*
 module "win-vm-sql" {
   source = "./win-vm-sql"
 
@@ -367,5 +487,11 @@ output "SQL-one-IP" {
 
 
 output "SQL-two-IP" {
-  value = module.win-two-sql.win_vm_sql_public_ip
+  value = module.win-two-sql.win_vm_sql_public_ip 
 } 
+*/
+
+# Windows VM Public IP
+output "win-vm-addc-one_public_ip" {
+  value = module.win-vm-addc-one.windows_vm_public_ip
+}
