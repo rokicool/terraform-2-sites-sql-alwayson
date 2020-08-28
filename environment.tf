@@ -495,3 +495,8 @@ output "SQL-two-IP" {
 output "win-vm-addc-one_public_ip" {
   value = module.win-vm-addc-one.windows_vm_public_ip
 }
+
+# Windows VM Public IP
+output "win-vm-addc-two_public_ip" {
+  value = module.win-vm-addc-two.windows_vm_public_ip
+}
