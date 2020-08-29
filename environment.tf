@@ -147,7 +147,7 @@ Infrastructure in US East
 # Make RG in East US
 resource "azurerm_resource_group" "resource-group-two" {
   name     = "rgp-east-${var.project_id}-${var.environment}"
-  location = "Central US"
+  location = "East US"
 }
 
 # Create a virtual network within the resource group
@@ -419,6 +419,39 @@ security_rule {
   }
 }
 
+/* -----------------------------------------------------------------------
+-
+VNet Peering
+-
+*/
+
+
+# enable global peering between the two virtual network
+resource "azurerm_virtual_network_peering" "peering-one-two" {
+  name                         = "peering-one-to-two-${var.project_id}-${var.environment}"
+  resource_group_name          = azurerm_resource_group.resource-group-one.name
+  virtual_network_name         = azurerm_virtual_network.vnet_one.name
+  remote_virtual_network_id    = azurerm_virtual_network.vnet_two.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = false
+
+  # `allow_gateway_transit` must be set to false for vnet Global Peering
+  allow_gateway_transit = false
+}
+
+
+# enable global peering between the two virtual network
+resource "azurerm_virtual_network_peering" "peering-two-one" {
+  name                         = "peering-two-to-one-${var.project_id}-${var.environment}"
+  resource_group_name          = azurerm_resource_group.resource-group-two.name
+  virtual_network_name         = azurerm_virtual_network.vnet_two.name
+  remote_virtual_network_id    = azurerm_virtual_network.vnet_one.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = false
+
+  # `allow_gateway_transit` must be set to false for vnet Global Peering
+  allow_gateway_transit = false
+}
 
 
 /*
