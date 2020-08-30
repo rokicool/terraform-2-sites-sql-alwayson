@@ -10,7 +10,7 @@ locals {
   install_ad_command   = "Add-WindowsFeature -name ad-domain-services -IncludeManagementTools"
   # configure_ad_command = "Install-ADDSForest -CreateDnsDelegation:$false -DomainName ${var.active_directory_domain} -DomainNetbiosName ${var.active_directory_netbios_name} -ForestMode Win2012R2 -InstallDns:$true -SafeModeAdministratorPassword $password -Force:$true"
   configure_ad_command_create = "Install-ADDSForest -CreateDnsDelegation:$false -DomainName ${var.active_directory_domain} -DomainNetbiosName ${var.active_directory_netbios_name} -InstallDns:$true -SafeModeAdministratorPassword $password -Force:$true"
-  configure_ad_command_join = "Start-Sleep -Second 120; Install-ADDSDomainController -DomainName ${var.active_directory_domain} -InstallDns:$true -SafeModeAdministratorPassword $password -Force:$true -Credential $Cred"
+  configure_ad_command_join = "Start-Sleep -Second 240; Install-ADDSDomainController -DomainName ${var.active_directory_domain} -InstallDns:$true -SafeModeAdministratorPassword $password -Force:$true -Credential $Cred"
   configure_ad_command = "${var.ad_create ? local.configure_ad_command_create : local.configure_ad_command_join}"
   
   shutdown_command     = "shutdown -r -t 10"
