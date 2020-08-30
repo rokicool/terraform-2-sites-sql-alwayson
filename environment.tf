@@ -232,7 +232,7 @@ module "win-vm-addc-two" {
   admin_password = var.admin_password
   network_security_group_id = azurerm_network_security_group.win-vm-nsg-two.id
 
-  dns_servers    = ["127.0.0.1", "10.50.2.4", "10.51.2.4", "168.63.129.16"]
+  dns_servers    = ["10.50.2.4", "10.51.2.4", "168.63.129.16"]
 
   vm_private_ip_address = "10.51.2.4"
   active_directory_domain = "alwayson.azure"
