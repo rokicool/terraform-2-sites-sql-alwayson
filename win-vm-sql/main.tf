@@ -18,7 +18,7 @@ resource "azurerm_public_ip" "win-vm-sql-ip" {
 resource "azurerm_network_interface" "win-vm-sql-nic" {
   depends_on=[azurerm_public_ip.win-vm-sql-ip]
 
-  name                      = "${var.win_vm_sql_name}-vm-nic-${var.project_id}-${var.environment}"
+  name                      = "nic-${var.win_vm_sql_name}-${var.project_id}-${var.environment}"
   location                  = var.vm_location
   resource_group_name       = var.vm_rg_name
 
@@ -28,6 +28,8 @@ resource "azurerm_network_interface" "win-vm-sql-nic" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.win-vm-sql-ip.id
   }
+
+  dns_servers                   = var.dns_servers
 
   tags = { 
     #application = var.app_name
@@ -64,7 +66,7 @@ resource "azurerm_virtual_machine" "win-vm-sql" {
   }
 
   storage_os_disk {
-    name              = "${var.win_vm_sql_name}-vm-${var.project_id}-${var.environment}-OSDisk"
+    name              = "vm-os-disk-${var.win_vm_sql_name}-vm-${var.project_id}-${var.environment}"
     caching           = "ReadOnly"
     create_option     = "FromImage"
     managed_disk_type = var.vm_storage_type

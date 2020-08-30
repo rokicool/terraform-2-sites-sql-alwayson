@@ -87,6 +87,10 @@ variable "sql_password" {
   description = "The password of SQL admin user"
 }
 
+variable "dns_servers" {
+  description = "List of DNS servers"
+}
+
 variable "project_id" {
   type = string
   description = "Name of the project"
@@ -95,4 +99,13 @@ variable "project_id" {
 variable "network_security_group_id" {
   type = string
   description = "network_security_group_id to associate with interface"
+}
+
+variable "active_directory_domain" {
+  description = "The name of the Active Directory domain, for example `consoto.local`"
+}
+
+
+variable "active_directory_oupath" {
+  description = "The name of the OU to put the machine to, for example `OU=Servers,DC=consoto,DC=local`"
 }

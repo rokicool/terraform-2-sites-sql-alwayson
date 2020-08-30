@@ -96,7 +96,6 @@ variable "network_security_group_id" {
   description = "network_security_group_id to associate with interface"
 }
 
-
 variable "active_directory_domain" {
   description = "The name of the Active Directory domain, for example `consoto.local`"
 }
