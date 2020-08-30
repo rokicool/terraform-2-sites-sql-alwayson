@@ -132,9 +132,12 @@ module "win-vm-addc-one" {
   admin_password = var.admin_password
   network_security_group_id = azurerm_network_security_group.win-vm-nsg-one.id
   
-  
+  dns_servers    = ["127.0.0.1", "10.50.2.4", "10.51.2.4", "168.63.129.16"]
+
+  vm_private_ip_address = "10.50.2.4"
   active_directory_domain = "alwayson.azure"
   active_directory_netbios_name = "alwayson"
+  ad_create = true
 }
 
 /* -----------------------------------------------------------------------
@@ -212,7 +215,10 @@ security_rule {
 
 
 module "win-vm-addc-two" {
-  source = "./win-vm"
+
+  depends_on=[module.win-vm-addc-one]
+
+  source = "./win-vm-addc"
 
   vm_name     = "windows-two"
   vm_rg_name  = azurerm_resource_group.resource-group-two.name 
@@ -224,9 +230,16 @@ module "win-vm-addc-two" {
   project_id  = var.project_id
   admin_username = var.admin_username
   admin_password = var.admin_password
-  network_security_group_id = azurerm_network_security_group.win-vm-nsg-one.id
-  
+  network_security_group_id = azurerm_network_security_group.win-vm-nsg-two.id
+
+  dns_servers    = ["127.0.0.1", "10.50.2.4", "10.51.2.4", "168.63.129.16"]
+
+  vm_private_ip_address = "10.51.2.4"
+  active_directory_domain = "alwayson.azure"
+  active_directory_netbios_name = "alwayson"
+  ad_create = false
 }
+
 /* 
 module "win-vm" {
   source = "./win-vm"
@@ -526,10 +539,10 @@ output "SQL-two-IP" {
 
 # Windows VM Public IP
 output "win-vm-addc-one_public_ip" {
-  value = module.win-vm-addc-one.windows_vm_public_ip
+  value = module.win-vm-addc-one.win_vm_public_ip
 }
 
 # Windows VM Public IP
 output "win-vm-addc-two_public_ip" {
-  value = module.win-vm-addc-two.windows_vm_public_ip
+  value = module.win-vm-addc-two.win_vm_public_ip
 }

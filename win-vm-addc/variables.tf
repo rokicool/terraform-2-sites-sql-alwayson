@@ -57,6 +57,15 @@ variable "vm_storage_type" {
 
 }
 
+variable "vm_private_ip_address" {
+  type = string
+  description = "Private IP address"
+}
+
+variable "dns_servers" {
+  description = "List of DNS servers"
+}
+
 variable "environment" {
   type = string
   description = "The environment for the machine to run"
@@ -94,4 +103,8 @@ variable "active_directory_domain" {
 
 variable "active_directory_netbios_name" {
   description = "The netbios name of the Active Directory domain, for example `consoto`"
+}
+
+variable "ad_create" {
+  description = "Boolean var to create or join the AD doman"
 }

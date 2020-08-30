@@ -1,7 +1,7 @@
 
 # Get a Static Public IP 
-resource "azurerm_public_ip" "windows-vm-ip" {
-  name                = "win-vm-ip"
+resource "azurerm_public_ip" "win-vm-ip" {
+  name                = "ip-win-vm-${var.project_id}-${var.environment}"
   location            = var.vm_location
   resource_group_name = var.vm_rg_name
   allocation_method   = "Static"
@@ -12,19 +12,23 @@ resource "azurerm_public_ip" "windows-vm-ip" {
 }
 
 # Create Network Card for web VM buyusa
-resource "azurerm_network_interface" "windows-vm-nic" {
-  depends_on=[azurerm_public_ip.windows-vm-ip]
+resource "azurerm_network_interface" "win-vm-nic" {
+  depends_on=[azurerm_public_ip.win-vm-ip]
 
-  name                      = "${var.vm_name}-vm-nic-${var.project_id}-${var.environment}"
+  name                      = "nic-${var.vm_name}-${var.project_id}-${var.environment}"
   location                  = var.vm_location
   resource_group_name       = var.vm_rg_name
 
   ip_configuration {
     name                          = "internal"
     subnet_id                     = var.vm_subnet_id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.windows-vm-ip.id
+    private_ip_address_allocation = "Static"
+    private_ip_address            = var.vm_private_ip_address
+    public_ip_address_id          = azurerm_public_ip.win-vm-ip.id
   }
+
+  dns_servers                   = var.dns_servers
+
 
   tags = { 
     #application = var.app_name
@@ -33,21 +37,21 @@ resource "azurerm_network_interface" "windows-vm-nic" {
 }
 
 # Create Windows Server
-resource "azurerm_windows_virtual_machine" "windows-vm" {
-  depends_on=[azurerm_network_interface.windows-vm-nic]
+resource "azurerm_windows_virtual_machine" "win-vm" {
+  depends_on=[azurerm_network_interface.win-vm-nic]
 
   name                  = "${var.vm_name}-vm-${var.project_id}-${var.environment}"
   location              = var.vm_location
   resource_group_name   = var.vm_rg_name
   size                  = var.vm_size
-  network_interface_ids = [azurerm_network_interface.windows-vm-nic.id]
+  network_interface_ids = [azurerm_network_interface.win-vm-nic.id]
   
   computer_name         = var.vm_name
   admin_username        = var.admin_username
   admin_password        = var.admin_password
 
   os_disk {
-    name                 = "${var.vm_name}-vm-os-disk-${var.project_id}-${var.environment}"
+    name                 = "vm-os-disk-${var.vm_name}-${var.project_id}-${var.environment}"
     caching              = "ReadWrite"
     storage_account_type = var.vm_storage_type
   }
@@ -69,6 +73,6 @@ resource "azurerm_windows_virtual_machine" "windows-vm" {
 }
 
 resource "azurerm_network_interface_security_group_association" "vm-nsg-association" {
-  network_interface_id      = azurerm_network_interface.windows-vm-nic.id
+  network_interface_id      = azurerm_network_interface.win-vm-nic.id
   network_security_group_id = var.network_security_group_id
 }
