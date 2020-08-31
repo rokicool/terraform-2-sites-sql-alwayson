@@ -599,7 +599,7 @@ module "win-one-sql" {
   vm_size     = "Standard_B2ms"
   project_id  = var.project_id
 
-  dns_servers    = ["10.50.2.254", "10.51.2.254", "168.63.129.16"]
+  dns_servers    = ["10.50.2.254", "10.51.2.254"]
 
   admin_username = var.admin_username
   admin_password = var.admin_password
@@ -635,7 +635,7 @@ module "win-two-sql" {
   vm_size     = "Standard_B2ms"
   project_id  = var.project_id
 
-  dns_servers    = ["10.51.2.254", "10.50.2.254", "168.63.129.16"]
+  dns_servers    = ["10.51.2.254", "10.50.2.254"]
 
   admin_username = var.admin_username
   admin_password = var.admin_password
