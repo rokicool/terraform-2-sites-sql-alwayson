@@ -65,6 +65,30 @@ provider "azurerm" {
 
 /* -----------------------------------------------------------------------
 -
+Storage accout for the Cloud Witness 
+-
+*/
+
+resource "azurerm_resource_group" "rgp-witness" {
+  name     = "rgp-east2-${var.project_id}-${var.environment}"
+  location = "East US2"
+}
+
+resource "azurerm_storage_account" "witness-storage-account" {
+  name                     = "saeast2${var.project_id}${var.environment}"
+  resource_group_name      = azurerm_resource_group.rgp-witness.name
+  location                 = azurerm_resource_group.rgp-witness.location
+  account_tier             = "Standard"
+  account_replication_type = "GRS"
+
+  tags = {
+    environment = var.environment
+  }
+}
+
+
+/* -----------------------------------------------------------------------
+-
 Infrastructure in US Central
 -
 */
@@ -231,7 +255,8 @@ module "win-vm-addc-one" {
   admin_password = var.admin_password
   network_security_group_id = azurerm_network_security_group.nsg-win-vm-one.id
   
-  dns_servers    = [ "10.50.2.254", "10.51.2.254", "168.63.129.16"]
+  dns_servers    = [ "10.50.2.254", "10.51.2.254"]
+  #dns_servers    = [ "10.50.2.254", "10.51.2.254", "168.63.129.16"]
 
   vm_private_ip_address = "10.50.2.254"
   active_directory_domain = var.ad_domain
@@ -412,7 +437,8 @@ module "win-vm-addc-two" {
   admin_password = var.admin_password
   network_security_group_id = azurerm_network_security_group.nsg-win-vm-two.id
 
-  dns_servers    = ["10.50.2.254", "10.51.2.254", "168.63.129.16"]
+  #dns_servers    = ["10.50.2.254", "10.51.2.254", "168.63.129.16"]
+  dns_servers    = ["10.50.2.254", "10.51.2.254"]
 
   vm_private_ip_address = "10.51.2.254"
   active_directory_domain = var.ad_domain
@@ -664,4 +690,14 @@ output "win-vm-addc-one_public_ip" {
 # Windows VM Public IP
 output "win-vm-addc-two_public_ip" {
   value = module.win-vm-addc-two.win_vm_public_ip
+}
+
+#
+output "witness-storage-account-key" {
+  value = azurerm_storage_account.witness-storage-account.primary_access_key
+}
+
+#
+output "witness-storage-account-primary_blob_connection_string" {
+  value = azurerm_storage_account.witness-storage-account.primary_blob_connection_string
 }
