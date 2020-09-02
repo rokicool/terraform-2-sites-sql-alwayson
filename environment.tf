@@ -205,7 +205,7 @@ security_rule {
     source_address_prefix      = "76.229.200.36/32"
     destination_address_prefix = "*" 
   }
-/*
+
 security_rule {
     name                       = "allow-sql-web-one"
     description                = "allow-sql-web-one"
@@ -232,7 +232,7 @@ security_rule {
     source_address_prefixes      = split(",", azurerm_app_service.app_service_two.outbound_ip_addresses)
     destination_address_prefix = "*" 
   }
-*/
+
   tags = {
    # application = var.app_name
     environment = var.environment 
@@ -383,10 +383,10 @@ security_rule {
     source_address_prefix      = "76.229.200.36/32"
     destination_address_prefix = "*" 
   }
-/*
+
 security_rule {
-    name                       = "allow-sql-web-two"
-    description                = "allow-sql-web-two"
+    name                       = "allow-sql-web-one"
+    description                = "allow-sql-web-one"
     priority                   = 115
     direction                  = "Inbound"
     access                     = "Allow"
@@ -410,7 +410,7 @@ security_rule {
     source_address_prefixes      = split(",", azurerm_app_service.app_service_two.outbound_ip_addresses)
     destination_address_prefix = "*" 
   }
-*/
+
   tags = {
    # application = var.app_name
     environment = var.environment 
@@ -466,9 +466,8 @@ module "win-vm" {
 */
 
 
-/*
-resource "azurerm_app_service_plan" "app_service_plan" {
-  name                = "app_service_plan"
+resource "azurerm_app_service_plan" "app-service-plan-one" {
+  name                = "app_service_plan-one-${var.project_id}-${var.environment}"
   location            = azurerm_resource_group.resource-group-one.location
   resource_group_name = azurerm_resource_group.resource-group-one.name
 
@@ -482,9 +481,7 @@ resource "azurerm_app_service" "app_service_one" {
   name                = "app-service-one-rokicool-2020"
   location            =  azurerm_resource_group.resource-group-one.location
   resource_group_name = azurerm_resource_group.resource-group-one.name
-  app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
-
-  
+  app_service_plan_id = azurerm_app_service_plan.app-service-plan-one.id
 
   app_settings = {
     "SOME_KEY" = "some-value"
@@ -493,16 +490,27 @@ resource "azurerm_app_service" "app_service_one" {
   connection_string {
     name  = "Database"
     type  = "SQLServer"
-        value = "Data Source=40.122.201.238;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
+        value = "Data Source=;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
   }
 }
 
+
+resource "azurerm_app_service_plan" "app-service-plan-two" {
+  name                = "app_service_plan-two-${var.project_id}-${var.environment}"
+  location            = azurerm_resource_group.resource-group-two.location
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+
+  sku {
+    tier = "Free"
+    size = "F1"
+  }
+}
 
 resource "azurerm_app_service" "app_service_two" {
   name                = "app-service-two-rokicool-2020"
-  location            =  azurerm_resource_group.resource-group-one.location
-  resource_group_name = azurerm_resource_group.resource-group-one.name
-  app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
+  location            =  azurerm_resource_group.resource-group-two.location
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+  app_service_plan_id = azurerm_app_service_plan.app-service-plan-two.id
 
   
 
@@ -513,10 +521,10 @@ resource "azurerm_app_service" "app_service_two" {
   connection_string {
     name  = "Database"
     type  = "SQLServer"
-    value = "Data Source=40.122.201.238;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
+    value = "Data Source=4;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
   }
 }
-*/
+
 
 /*
 
