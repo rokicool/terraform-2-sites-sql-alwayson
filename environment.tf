@@ -120,6 +120,24 @@ resource "azurerm_subnet" "def-subnet-one" {
 }
 
 
+resource "azurerm_subnet" "webapp-subnet-one" {
+  name                 = "webapp-subnet-one"
+  resource_group_name  = azurerm_resource_group.resource-group-one.name
+  virtual_network_name = azurerm_virtual_network.vnet_one.name
+  address_prefixes     = ["10.50.3.0/24"]
+
+  delegation {
+    name = "webapp-delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+  
+}
+
+
 # Create Network Security Group to Access Win VM One from Internet
 resource "azurerm_network_security_group" "nsg-win-vm-one" {
   name                = "nsg-win-vm-one-${var.project_id}-${var.environment}"
@@ -205,7 +223,7 @@ security_rule {
     source_address_prefix      = "76.229.200.36/32"
     destination_address_prefix = "*" 
   }
-
+/*
 security_rule {
     name                       = "allow-sql-web-one"
     description                = "allow-sql-web-one"
@@ -232,6 +250,32 @@ security_rule {
     source_address_prefixes      = split(",", azurerm_app_service.app_service_two.outbound_ip_addresses)
     destination_address_prefix = "*" 
   }
+*/
+  tags = {
+   # application = var.app_name
+    environment = var.environment 
+  }
+}
+
+/* -----------------------------------------------------------------------
+-
+Load Balancer for SQL Server One
+-
+*/
+
+
+resource "azurerm_lb" "lb-sql-one" {
+  name                = "lb-sql-one-${var.project_id}-${var.environment}"
+  location            = azurerm_resource_group.resource-group-one.location
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+
+  frontend_ip_configuration {
+
+    name              = "lb-sql-one-ip"
+    subnet_id         = azurerm_subnet.def-subnet-one.id
+    private_ip_address = "10.50.2.240"
+    private_ip_address_allocation = "Static"
+  }
 
   tags = {
    # application = var.app_name
@@ -239,6 +283,39 @@ security_rule {
   }
 }
 
+resource "azurerm_lb_probe" "lb-sql-one-hp" {
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+  loadbalancer_id     = azurerm_lb.lb-sql-one.id
+  name                = "sql-server-access-probe"
+  port                = 1433
+}
+
+resource "azurerm_lb_rule" "lb-sql-one-rule" {
+  resource_group_name            = azurerm_resource_group.resource-group-one.name
+  loadbalancer_id                = azurerm_lb.lb-sql-one.id
+  name                           = "lb-sql-one-rule"
+  protocol                       = "Tcp"
+  frontend_port                  = 1433
+  backend_port                   = 1433
+  frontend_ip_configuration_name = "lb-sql-one-ip"
+
+  #frontend_ip_configuration_name = "private"
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.lb-sql-one-address-pool.id
+  probe_id                       = azurerm_lb_probe.lb-sql-one-hp.id
+}
+
+
+resource "azurerm_lb_backend_address_pool" "lb-sql-one-address-pool" {
+  resource_group_name = azurerm_resource_group.resource-group-one.name
+  loadbalancer_id     = azurerm_lb.lb-sql-one.id
+  name                = "lb-sql-one-address-pool"
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "lb-sql-one-address-pool-ass" {
+  network_interface_id    = module.win-one-sql.win-vm-sql-nic-id
+  ip_configuration_name   = module.win-one-sql.win-vm-sql-nic-ip-conf-name
+  backend_address_pool_id = azurerm_lb_backend_address_pool.lb-sql-one-address-pool.id
+}
 
 module "win-vm-addc-one" {
   source = "./win-vm-addc"
@@ -297,6 +374,22 @@ resource "azurerm_subnet" "def-subnet-two" {
   
 }
 
+resource "azurerm_subnet" "webapp-subnet-two" {
+  name                 = "webapp-subnet-two"
+  resource_group_name  = azurerm_resource_group.resource-group-two.name
+  virtual_network_name = azurerm_virtual_network.vnet_two.name
+  address_prefixes     = ["10.51.3.0/24"]
+
+  delegation {
+    name = "webapp-delegation"
+
+    service_delegation {
+      name    = "Microsoft.Web/serverFarms"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+    }
+  }
+  
+}
 
 # Create Network Security Group to Access Win VM two from Internet
 resource "azurerm_network_security_group" "nsg-win-vm-two" {
@@ -383,7 +476,7 @@ security_rule {
     source_address_prefix      = "76.229.200.36/32"
     destination_address_prefix = "*" 
   }
-
+/*
 security_rule {
     name                       = "allow-sql-web-one"
     description                = "allow-sql-web-one"
@@ -410,6 +503,33 @@ security_rule {
     source_address_prefixes      = split(",", azurerm_app_service.app_service_two.outbound_ip_addresses)
     destination_address_prefix = "*" 
   }
+*/
+  tags = {
+   # application = var.app_name
+    environment = var.environment 
+  }
+}
+
+
+/* -----------------------------------------------------------------------
+-
+Load Balancer for SQL Server Two
+-
+*/
+
+
+resource "azurerm_lb" "lb-sql-two" {
+  name                = "lb-sql-two-${var.project_id}-${var.environment}"
+  location            = azurerm_resource_group.resource-group-two.location
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+
+  frontend_ip_configuration {
+
+    name              = "lb-sql-two-ip"
+    subnet_id         = azurerm_subnet.def-subnet-two.id
+    private_ip_address = "10.51.2.240"
+    private_ip_address_allocation = "Static"
+  }
 
   tags = {
    # application = var.app_name
@@ -417,6 +537,39 @@ security_rule {
   }
 }
 
+resource "azurerm_lb_probe" "lb-sql-two-hp" {
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+  loadbalancer_id     = azurerm_lb.lb-sql-two.id
+  name                = "sql-server-access-probe"
+  port                = 1433
+}
+
+resource "azurerm_lb_rule" "lb-sql-two-rule" {
+  resource_group_name            = azurerm_resource_group.resource-group-two.name
+  loadbalancer_id                = azurerm_lb.lb-sql-two.id
+  name                           = "lb-sql-two-rule"
+  protocol                       = "Tcp"
+  frontend_port                  = 1433
+  backend_port                   = 1433
+  frontend_ip_configuration_name = "lb-sql-two-ip"
+
+  #frontend_ip_configuration_name = "private"
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.lb-sql-two-address-pool.id
+  probe_id                       = azurerm_lb_probe.lb-sql-two-hp.id
+}
+
+
+resource "azurerm_lb_backend_address_pool" "lb-sql-two-address-pool" {
+  resource_group_name = azurerm_resource_group.resource-group-two.name
+  loadbalancer_id     = azurerm_lb.lb-sql-two.id
+  name                = "lb-sql-two-address-pool"
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "lb-sql-two-address-pool-ass" {
+  network_interface_id    = module.win-two-sql.win-vm-sql-nic-id
+  ip_configuration_name   = module.win-two-sql.win-vm-sql-nic-ip-conf-name
+  backend_address_pool_id = azurerm_lb_backend_address_pool.lb-sql-two-address-pool.id
+}
 
 
 module "win-vm-addc-two" {
@@ -472,8 +625,8 @@ resource "azurerm_app_service_plan" "app-service-plan-one" {
   resource_group_name = azurerm_resource_group.resource-group-one.name
 
   sku {
-    tier = "Free"
-    size = "F1"
+    tier = "Standard"
+    size = "S1"
   }
 }
 
@@ -485,13 +638,20 @@ resource "azurerm_app_service" "app_service_one" {
 
   app_settings = {
     "SOME_KEY" = "some-value"
+    "WEBSITE_DNS_SERVER"     = "10.50.2.254"
+    "WEBSITE_DNS_ALT_SERVER" = "10.51.2.254"
   }
 
   connection_string {
     name  = "Database"
     type  = "SQLServer"
-        value = "Data Source=;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
+        value = "Data Source=10.50.2.4;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
   }
+}
+
+resource "azurerm_app_service_virtual_network_swift_connection" "net_app_one" {
+  app_service_id = azurerm_app_service.app_service_one.id
+  subnet_id      = azurerm_subnet.webapp-subnet-one.id
 }
 
 
@@ -501,8 +661,8 @@ resource "azurerm_app_service_plan" "app-service-plan-two" {
   resource_group_name = azurerm_resource_group.resource-group-two.name
 
   sku {
-    tier = "Free"
-    size = "F1"
+    tier = "Standard"
+    size = "S1"
   }
 }
 
@@ -512,18 +672,26 @@ resource "azurerm_app_service" "app_service_two" {
   resource_group_name = azurerm_resource_group.resource-group-two.name
   app_service_plan_id = azurerm_app_service_plan.app-service-plan-two.id
 
-  
 
   app_settings = {
     "SOME_KEY" = "some-value"
+    "WEBSITE_DNS_SERVER"     = "10.51.2.254"
+    "WEBSITE_DNS_ALT_SERVER" = "10.50.2.254"
   }
 
   connection_string {
     name  = "Database"
     type  = "SQLServer"
-    value = "Data Source=4;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
+    value = "Data Source=10.51.2.4;Initial Catalog=DonNetAppSqlDb;User ID=${var.sql_username};Password=${var.sql_password}"
   }
 }
+
+
+resource "azurerm_app_service_virtual_network_swift_connection" "net_app_two" {
+  app_service_id = azurerm_app_service.app_service_two.id
+  subnet_id      = azurerm_subnet.webapp-subnet-two.id
+}
+
 
 
 /*
