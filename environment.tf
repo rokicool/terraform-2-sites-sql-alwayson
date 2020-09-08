@@ -263,7 +263,7 @@ Load Balancer for SQL Server One
 -
 */
 
-
+/*
 resource "azurerm_lb" "lb-sql-one" {
   name                = "lb-sql-one-${var.project_id}-${var.environment}"
   location            = azurerm_resource_group.resource-group-one.location
@@ -316,6 +316,8 @@ resource "azurerm_network_interface_backend_address_pool_association" "lb-sql-on
   ip_configuration_name   = module.win-one-sql.win-vm-sql-nic-ip-conf-name
   backend_address_pool_id = azurerm_lb_backend_address_pool.lb-sql-one-address-pool.id
 }
+*/
+
 
 module "win-vm-addc-one" {
   source = "./win-vm-addc"
@@ -515,7 +517,7 @@ security_rule {
 -
 Load Balancer for SQL Server Two
 -
-*/
+
 
 
 resource "azurerm_lb" "lb-sql-two" {
@@ -571,6 +573,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "lb-sql-tw
   backend_address_pool_id = azurerm_lb_backend_address_pool.lb-sql-two-address-pool.id
 }
 
+*/
 
 module "win-vm-addc-two" {
 
